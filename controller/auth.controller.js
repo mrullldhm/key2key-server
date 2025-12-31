@@ -32,16 +32,33 @@ export const signin = async (req, res, next) => {
   const { email, password } = req.body;
 
   try {
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const user = false;
 
-    console.log(email, password, hashedPassword);
+    if (!user) {
+      const error = new Error("User not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      const error = new Error("Unauthorized");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    // jwt.sign(payload, secret, options);
+    const token = jwt.sign({}, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    // const token = jwt.sign({ id: result.lastInsertRowid }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
+    console.log(email, password);
     res.status(201).json({
       success: true,
       message: "User sign-in successfully",
       data: {
-        // token,
-        // user: newUsers[0],
+        token,
+        user,
       },
     });
   } catch (err) {
@@ -49,9 +66,9 @@ export const signin = async (req, res, next) => {
   }
 };
 
-export const signout = (req, res, next) => {
+export const signout = (_, res, next) => {
   try {
-    res.clearCookie("token");
+    // res.clearCookie("token");
 
     res.status(201).json({
       success: true,
