@@ -50,7 +50,7 @@ export const signin = async (req, res, next) => {
 
     // jwt.sign(payload, secret, options);
     const token = jwt.sign({}, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-    // const token = jwt.sign({ id: result.lastInsertRowid }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    // const token = jwt.sign({ userId: result.lastInsertRowid }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
     console.log(email, password);
     res.status(201).json({
