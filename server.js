@@ -3,10 +3,11 @@ import passwordRouter from "./routes/password.routes.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 import authRouter from "./routes/auth.routes.js";
 import { PORT } from "./config/env.js";
+import authorize from "./middleware/auth.middleware.js";
 
 const app = express();
 
-// Middleware (built-in)
+// Global Middleware (built-in)
 app.use(express.json());
 
 // Routes
@@ -15,9 +16,8 @@ app.get("/", (req, res) => {
 });
 
 // Router
-// app.use('/api/v1/auth', authRo)
 app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/password", passwordRouter);
+app.use("/api/v1/password", authorize, passwordRouter);
 
 // Error Handller Middleware
 app.use(errorMiddleware);
