@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../config/prisma.client.js";
-import generateVaultKeys from "../utils/crypto.util.js"; // Import our new helper
+import { generateKeys } from "../utils/crypto.util.js";
 
 export const signup = async (req, res, next) => {
   try {
@@ -21,8 +21,8 @@ export const signup = async (req, res, next) => {
       throw error;
     }
 
-    // Generate Vault Assets
-    const { vaultKeySalt, publicKey, privateKeyData } = await generateVaultKeys(
+    // Generate Key Assets
+    const { vaultKeySalt, publicKey, privateKey } = await generateKeys(
       password
     );
 
@@ -37,7 +37,7 @@ export const signup = async (req, res, next) => {
         password: hashedPassword,
         vaultKeySalt,
         publicKey,
-        privateKey: privateKeyData,
+        privateKey: privateKey,
       },
     });
 
@@ -91,7 +91,6 @@ export const signin = async (req, res, next) => {
       expiresIn: process.env.JWT_EXPIRES_IN,
     });
 
-    console.log(email, password);
     res.status(201).json({
       success: true,
       message: "User sign-in successfully",
