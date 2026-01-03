@@ -2,13 +2,16 @@ import { Router } from "express";
 import {
   createCredential,
   deleteCredential,
+  getAllCredential,
   getCredential,
   updateCredential,
 } from "../controller/credential.controller.js";
 
 const credentialRouter = Router();
 
-credentialRouter.get("/", getCredential);
+credentialRouter.get("/:id", getCredential);
+
+credentialRouter.get("/", getAllCredential);
 
 credentialRouter.post("/", createCredential);
 
