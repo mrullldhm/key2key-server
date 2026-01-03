@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String  @id @default(uuid())
+  email        String  @unique
+  password     String
+  vaultKeySalt String
+  publicKey    String?
+  privateKey   String
+
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+
+  credentials Credential[]
+  folder      Folder[]
+  permission  Permission[]
+}
+
+model Folder {
+  id     String @id @default(uuid())
+  name   String
+  userId String
+
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  credentials Credential[]
+
+  @@unique([name, userId])
+}
+
+model Credential {
+  id       String  @id @default(uuid())
+  title    String
+  logInUrl String?
+  notes    String?
+
+  encryptedUsername String
+  encryptedPassword String
+
+  iv  String
+  tag String?
+
+  favorite Boolean @default(false)
+  userId   String
+  folderId String?
+
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder Folder? @relation(fields: [folderId], references: [id])
+
+  permission Permission[]
+
+  @@index([userId])
+}
+
+model Permission {
+  id               String @id @default(uuid())
+  encryptedDataKey String
+  iv               String
+  userId           String
+  credentialId     String
+
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id])
+  credential Credential @relation(fields: [credentialId], references: [id])
+
+  @@unique([userId, credentialId])
+}
