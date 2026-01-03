@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
-import {JWT_SECRET} from "../config/env.js"
-// import User from "../models/user.model.js";
+import { prisma } from "../config/prisma.client.js";
 
 const authorize = async (req, res, next) => {
   try {
@@ -14,27 +13,31 @@ const authorize = async (req, res, next) => {
     }
 
     if (!token) {
-      const error = new Error("Unauthorized")
-      error.statusCode = 401
-      throw error
+      const error = new Error("Unauthorized");
+      error.statusCode = 401;
+      throw error;
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET)
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.userId)
-
-    if(!user) {
-      const error = new Error('Unauthorized')
-      error.statusCode = 401
-      throw error
+    const user = await prisma.user.findUnique({
+      where: {
+        id: decoded.id,
+      },
+    });
+    
+    if (!user) {
+      const error = new Error("Unauthorized");
+      error.statusCode = 401;
+      throw error;
     }
 
-    req.user = user
+    req.user = user;
 
-    next()
+    next();
   } catch (err) {
-    next(err)
+    next(err);
   }
 };
 
-export default authorize
+export default authorize;
