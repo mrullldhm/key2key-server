@@ -1,61 +1,55 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { JWT_EXPIRES_IN, JWT_SECRET } from "../config/env.js";
-// import db from "../database/db.js";
+import { prisma } from "../config/prisma.client.js";
+import generateVaultKeys from "../utils/crypto.util.js"; // Import our new helper
 
 export const signup = async (req, res, next) => {
-  const { username, email, password } = req.body;
-
   try {
+    // Data from request
+    const { email, password } = req.body;
+
+    // Check if a user already exist
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (existingUser) {
+      const error = new Error("User already exist");
+      error.statusCode = 409;
+      throw error;
+    }
+
+    // Generate Vault Assets
+    const { vaultKeySalt, publicKey, privateKeyData } = await generateVaultKeys(
+      password
+    );
+
+    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // jwt.sign(payload, secret, options);
-    const token = jwt.sign({}, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-    // const token = jwt.sign({ id: result.lastInsertRowid }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    // Submit to database
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        vaultKeySalt,
+        publicKey,
+        privateKey: privateKeyData,
+      },
+    });
 
-    console.log(username, email, password, hashedPassword);
+    // Create a token
+    // jwt.sign(payload, secret, options);
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    });
+
     res.status(201).json({
       success: true,
       message: "User sign-up successfully",
-      data: {
-        token,
-        // user: newUsers[0],
-      },
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-export const signin = async (req, res, next) => {
-  const { email, password } = req.body;
-
-  try {
-    const user = false;
-
-    if (!user) {
-      const error = new Error("User not found");
-      error.statusCode = 404;
-      throw error;
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      const error = new Error("Unauthorized");
-      error.statusCode = 401;
-      throw error;
-    }
-
-    // jwt.sign(payload, secret, options);
-    const token = jwt.sign({}, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-    // const token = jwt.sign({ userId: result.lastInsertRowid }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-
-    console.log(email, password);
-    res.status(201).json({
-      success: true,
-      message: "User sign-in successfully",
       data: {
         token,
         user,
@@ -66,11 +60,62 @@ export const signin = async (req, res, next) => {
   }
 };
 
+export const signin = async (req, res, next) => {
+  try {
+    // Data from request
+    const { email, password } = req.body;
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      const error = new Error("User not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Verify password for authentication
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      const error = new Error("Unauthorized");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    // Create a token
+    // jwt.sign(payload, secret, options);
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    });
+
+    console.log(email, password);
+    res.status(201).json({
+      success: true,
+      message: "User sign-in successfully",
+      data: {
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          vaultKeySalt: user.vaultKeySalt,
+          publicKey: user.publicKey,
+          privateKey: user.privateKey,
+        },
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const signout = (_, res, next) => {
   try {
-    // res.clearCookie("token");
+    res.clearCookie("token");
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       message: "User sign-out successfully",
     });
