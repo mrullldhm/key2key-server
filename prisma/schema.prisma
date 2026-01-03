@@ -55,8 +55,8 @@ model Credential {
 
   iv  String
   tag String?
-
   favorite Boolean @default(false)
+  
   userId   String
   folderId String?
 
