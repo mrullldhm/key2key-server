@@ -6,3 +6,6 @@ node_modules
 key2key.rest
 
 server.MD
+/generated/prisma
+
+/generated/prisma
