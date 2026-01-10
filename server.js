@@ -20,7 +20,7 @@ app.use(helmet());
 // CORS Configuration
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173", // URL of your Frontend
+    origin: process.env.CLIENT_URL || "http://localhost:4200", // URL of your Frontend
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true, // Allows sending cookies/tokens if needed
   })
