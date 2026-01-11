@@ -2,11 +2,14 @@ import { Router } from "express";
 import {
   confirmShareCredential,
   deleteSharePermission,
+  getCredentialAccessList,
   patchCredentialFav,
   requestShareCredential,
 } from "../controller/share.controller.js";
 
 const shareRouter = Router();
+
+shareRouter.get("/:id/access-list", getCredentialAccessList);
 
 shareRouter.post("/share-request", requestShareCredential);
 
