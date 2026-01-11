@@ -1,5 +1,41 @@
 import { prisma } from "../config/prisma.client.js";
 
+export const getCredentialAccessList = async (req, res, next) => {
+  try {
+    const { id } = req.params; // Credential ID
+    const userId = req.user.id; // From your auth middleware
+
+    // Verify requester has access to this credential before showing the list
+    const hasPermission = await prisma.permission.findFirst({
+      where: {
+        credentialId: id,
+        userId: userId,
+      },
+    });
+
+    if (!hasPermission) {
+      const error = new Error(
+        "Unauthorized: You do not have access to this credential"
+      );
+      error.statusCode = 403;
+      throw error;
+    }
+
+    const permissions = await prisma.permission.findMany({
+      where: { credentialId: id },
+      include: {
+        user: {
+          select: { id: true, email: true },
+        },
+      },
+    });
+
+    res.status(200).json({ success: true, data: permissions });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const requestShareCredential = async (req, res, next) => {
   try {
     const { credentialId, targetEmail } = req.body;
