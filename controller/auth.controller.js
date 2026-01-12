@@ -62,12 +62,12 @@ import { prisma } from "../config/prisma.client.js";
 
 export const signup = async (req, res, next) => {
   try {
-    const { 
-      email, 
+    const {
+      email,
       password, // This is the HASH from the Angular frontend
-      vaultKeySalt, 
-      publicKey, 
-      privateKey // This is the ENCRYPTED private key from the frontend
+      vaultKeySalt,
+      publicKey,
+      privateKey, // This is the ENCRYPTED private key from the frontend
     } = req.body;
 
     // 1. Standard check for existing user
@@ -79,7 +79,7 @@ export const signup = async (req, res, next) => {
     }
 
     // 2. IMPORTANT: We hash the "Frontend Hash" one more time.
-    // Why? If your DB leaks, the attacker gets a "Bcrypt of a Hash". 
+    // Why? If your DB leaks, the attacker gets a "Bcrypt of a Hash".
     // They STILL can't unlock the Vault because they don't have the original Client Hash.
     const salt = await bcrypt.genSalt(10);
     const serverSideHash = await bcrypt.hash(password, salt);
@@ -102,15 +102,16 @@ export const signup = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: "User signed up successfully",
-      data: { 
-        token, 
-        user: { id: user.id, email: user.email } 
+      data: {
+        token,
+        user: { id: user.id, email: user.email },
       },
     });
   } catch (err) {
     next(err);
   }
 };
+
 export const signin = async (req, res, next) => {
   try {
     const { email, password } = req.body; // 'password' here is actually the HASH from Frontend
@@ -124,7 +125,7 @@ export const signin = async (req, res, next) => {
     }
 
     // Verify the Client-Side Hash against the DB
-    // Since the frontend sends the same hash every time, 
+    // Since the frontend sends the same hash every time,
     // bcrypt.compare will work perfectly.
     const isHashValid = await bcrypt.compare(password, user.password);
 
@@ -142,15 +143,19 @@ export const signin = async (req, res, next) => {
       success: true,
       data: {
         token,
-        // We send back the encrypted private key so the frontend can decrypt it
-        privateKey: user.privateKey, 
-        publicKey: user.publicKey
+        user: {
+          id: user.id,
+          email: user.email,
+          publicKey: user.publicKey,
+        },
+        privateKey: user.privateKey,
       },
     });
   } catch (err) {
     next(err);
   }
 };
+
 export const signout = (_, res, next) => {
   try {
     res.clearCookie("token");
