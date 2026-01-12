@@ -5,8 +5,9 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma"
+  binaryTargets = ["native"] // optional, ensures Prisma binaries work on Render
 }
 
 datasource db {
@@ -53,10 +54,10 @@ model Credential {
   encryptedUsername String
   encryptedPassword String
 
-  iv  String
-  tag String?
+  iv       String
+  tag      String?
   favorite Boolean @default(false)
-  
+
   userId   String
   folderId String?
 
