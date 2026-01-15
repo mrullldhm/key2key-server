@@ -11,7 +11,14 @@ export const getAllCredential = async (req, res, next) => {
       include: {
         credential: {
           include: {
-            folder: true, // If exist
+            folder: true,
+            // ADD THIS BLOCK START
+            user: { 
+              select: {
+                email: true, // This gets the owner's email
+              },
+            },
+            // ADD THIS BLOCK END
           },
         },
       },
